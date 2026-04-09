@@ -1,0 +1,51 @@
+name: Evening Message
+
+on:
+  schedule:
+    # Runs every day at 6:00 PM UTC (adjust to your preferred timezone)
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Custom message to send (optional)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  send-evening-message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Send evening message
+        env:
+          # Which channel to use: slack | discord | email
+          MESSAGE_CHANNEL: ${{ vars.MESSAGE_CHANNEL || 'slack' }}
+
+          # Optional: override the default message text
+          EVENING_MESSAGE: ${{ inputs.message || vars.EVENING_MESSAGE || '' }}
+
+          # --- Slack ---
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+          # --- Discord ---
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+          # --- Email (SMTP) ---
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
+          EMAIL_SUBJECT: ${{ vars.EMAIL_SUBJECT || 'Evening Message' }}
+
+        run: python send_message.py
